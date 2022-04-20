@@ -4,17 +4,17 @@ var movingBackground
 var bussin
 var bozo
 var potholeImage
-var potholesGroup
+var obstaclesGroup
 var GROUND_Y = 200
+let scrollSpeed
 
-var score = 0
+let score = 0
 
 var GRAVITY = 1;
 var JUMP = 20;
 
 var x1 = 0;
 var x2;
-var scrollSpeed = 9;
 
 let gameState = 'start'
 
@@ -28,11 +28,9 @@ function preload() {
 
 function setup() {
   createCanvas(1000, 500);
+
   x2 = width
 
-
-
-  potholesGroup = new Group();
   bozo = createSprite(100, 400);
   bozo.addAnimation('running', 'assets/running0001.png', 'assets/running0002.png');
   bozo.addAnimation('jumping', 'assets/jumping0001.png');
@@ -45,8 +43,8 @@ function setup() {
   sky.addAnimation('normal', 'assets/skybox0001.png', 'assets/skybox0002.png');
   sky.setCollider('rectangle', 0, 0, 200, 30);
 
-
-score = 0
+  obstaclesGroup = new Group();
+  score = 0
 
 }
 
@@ -62,25 +60,22 @@ function draw() {
       gameEnd()
       break;
   }
-
-
-
 }
 
 function keyPressed() {
   if (gameState === 'start' || gameState === 'end') {
-    if (key === 'G' || key === 'g' ) {
+    if (key === 'G' || key === 'g') {
       gameState = 'play';
-      bozo.position.x=100
-      bozo.position.y=400
-
-
+      bozo.position.x = 100
+      bozo.position.y = 400
+      score = 0
     }
   }
 }
 
 
 function backgroundMoving() {
+  scrollSpeed = (10 + 3 * score / 100)
   image(movingBackground, x1, 0, width + 9, height);
   image(movingBackground, x2, 0, width + 9, height);
 
@@ -98,90 +93,109 @@ function backgroundMoving() {
 
 
 function gameStart() {
-  image(startMenu,0,0)
+  image(startMenu, 0, 0)
 }
 
 function gamePlay() {
-  score = score + Math.round(getFrameRate()/60);
 
   backgroundMoving()
 
+  score = score + Math.round(getFrameRate() / 60);
+
   push()
   textSize(20)
-  fill(255,255,255)
-  text("Score: "+ score,30,50);
+  fill(255, 255, 255)
+  text("Score: " + score, 30, 50);
   pop()
 
   animation(bussin, 850, 175)
 
-
-
   bozo.collide(sky)
 
-
   bozo.velocity.y += GRAVITY;
-
-
 
   if (bozo.collide(ground)) {
     bozo.velocity.y = 0;
     bozo.changeAnimation('running');
   }
-  if (mouseWentDown(LEFT)) {
-    bozo.changeAnimation('jumping');
-    bozo.animation.rewind();
-    bozo.velocity.y = -JUMP;
-  }
+
+
+
+  if(mouseWentDown(LEFT)){
+    if (bozo.position < 101,350,1)
+    jump()
+}else {
+}
+
+
+
 
 
   bozo.debug = true;
   ground.debug = true;
   sky.debug = true
 
-  spawnPotholes()
+
 
   drawSprites();
 
-  for (var i = 0; i < potholesGroup.length; i++)
-    if (potholesGroup[i].position.x < bozo.position.x - width / 2)
-      potholesGroup[i].remove()
+  for (var i = 0; i < obstaclesGroup.length; i++)
+    if (obstaclesGroup[i].position.x < bozo.position.x - width / 2)
+      obstaclesGroup[i].remove()
 
-if(bozo.overlap(sky))
-gameEnd()
 
-if(bozo.overlap(potholesGroup))
-gameEnd()
+  if (bozo.overlap(obstaclesGroup))
+    gameEnd()
+
+  spawnPotholes()
 
 }
 
 function spawnPotholes() {
-  if(frameCount % 60 === 0) {
-    var pothole = createSprite(500,415,20,30);
-    pothole.setCollider('circle',0,0,45)
-    pothole.debug = true
+  if (frameCount % 60 === 0) {
+    var obstacles = createSprite(1000, 415, 20, 30);
+    obstacles.setCollider('circle', 0, 0, 45)
+    obstacles.debug = true
 
-    pothole.velocityX = -(6 + 3*score/100);
 
-console.log(pothole.velocityX)
+
+
     //generate random obstacles
-    var rand = Math.round(random(1,2));
-    switch(rand) {
-      case 1: pothole.addImage(potholeImage);
-              break;
-      case 2: pothole.addImage(potholeImage);
-              break;
-      default: break;
+    var rand = Math.round(random(1, 2));
+    switch (rand) {
+      case 1:
+        obstacles.addImage(potholeImage);
+        break;
+      case 2:
+        obstacles.addImage(potholeImage);
+        break;
+      default:
+        break;
     }
 
+    obstacles.lifetime = 300;
 
-
-    potholesGroup.add(pothole);
+    obstaclesGroup.add(obstacles);
+    obstacles.velocity.x = -(10 + 3 * score / 100);
+    // console.log(obstacles.velocityX)
   }
 }
 
 
 function gameEnd() {
-gameState = 'end'
-image(endMenu,0,0)
-score = 0
+  gameState = 'end'
+  image(endMenu, 0, 0)
+  push()
+  fill(8, 255, 69)
+  textSize(30)
+  text("your score was: " + score, 150, 360)
+  pop()
+  obstaclesGroup.removeSprites()
+  scrollSpeed = score
+}
+
+function jump() {
+  bozo.changeAnimation("jumping");
+  bozo.animation.rewind();
+  bozo.velocity.y = -JUMP;
 }
